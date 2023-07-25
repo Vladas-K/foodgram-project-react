@@ -9,7 +9,6 @@ from rest_framework.serializers import (CharField, IntegerField,
 
 from recipes.models import (Favorite, Follow, Ingredient, IngredientRecipe,
                             Recipe, ShoppingCart, Tag)
-
 from .validators import (validate_favorite, validate_recipe,
                          validate_shopping_cart, validate_subscription)
 
@@ -42,24 +41,6 @@ class UserSerializer(UserSerializer):
         user.password = make_password(validated_data["password"])
         user.save()
         return user
-
-
-class FollowReadSerializer(ModelSerializer):
-    recipes = SerializerMethodField()
-    recipes_count = SerializerMethodField()
-
-    class Meta:
-        model = User
-        fields = (
-            'email', 'id', 'username', 'first_name', 'last_name',
-            'recipes', 'recipes_count'
-        )
-
-    def get_recipes(self, author):
-        return Recipe.objects.filter(author=author).values()
-
-    def get_recipes_count(self, author):
-        return Recipe.objects.filter(author=author).count()
 
 
 class FollowSerializer(ModelSerializer):
@@ -137,6 +118,21 @@ class RecipeReadSerializer(ModelSerializer):
         return obj.shopping_list.filter(user=request.user).exists()
 
 
+class FollowReadSerializer(ModelSerializer):
+    recipes = RecipeReadSerializer(many=True, read_only=True)
+    recipes_count = SerializerMethodField()
+
+    class Meta:
+        model = User
+        fields = (
+            'email', 'id', 'username', 'first_name', 'last_name',
+            'recipes', 'recipes_count'
+        )
+
+    def get_recipes_count(self, author):
+        return Recipe.objects.filter(author=author).count()
+
+
 class RecipeCreateSerializer(ModelSerializer):
     image = Base64ImageField(max_length=None)
     ingredients = IngredientRecipeWriteSerializer(
@@ -158,17 +154,17 @@ class RecipeCreateSerializer(ModelSerializer):
     def validate(self, data):
         return validate_recipe(self, data)
 
+    def add_tags(self, instance, tags):
+        for tag in tags:
+            current_tag, status = Tag.objects.get_or_create(name=tag)
+            instance.tags.add(current_tag)
+
     def create(self, validated_data):
-        # Иначе делаем следующее:
-        # Уберём список достижений из словаря validated_data и сохраним его
         tags = validated_data.pop('tags')
         ingredients = validated_data.pop('ingredients')
         validated_data['author'] = self.context['request'].user
-        # Сначала добавляем котика в БД
         recipe = Recipe.objects.create(**validated_data)
-        for tag in tags:
-            current_tag, status = Tag.objects.get_or_create(name=tag)
-            recipe.tags.add(current_tag)
+        self.add_tags(recipe, tags)
         ingredient_list = [
             IngredientRecipe(
                 ingredient=ingredient_data['id'],
@@ -185,11 +181,9 @@ class RecipeCreateSerializer(ModelSerializer):
         ingredients = validated_data.pop('ingredients')
         for key, value in validated_data.items():
             setattr(instance, key, value)
-        instance.save()
+        super().update(instance, validated_data)
         instance.tags.clear()
-        for tag in tags:
-            current_tag, status = Tag.objects.get_or_create(name=tag)
-            instance.tags.add(current_tag)
+        self.add_tags(instance, tags)
         IngredientRecipe.objects.filter(recipe=instance).delete()
         ingredient_list = [
             IngredientRecipe(
