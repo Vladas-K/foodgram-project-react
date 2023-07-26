@@ -138,13 +138,14 @@ class RecipeViewSet(viewsets.ModelViewSet):
             recipe__shopping_list__user=request.user
         ).values(
             'ingredient__name', 'ingredient__measurement_unit'
-        ).annotate(amount=Sum('amount'))
+        ).annotate(total_amount=Sum('amount'))
         shopping_list = []
         for i, ingredient in enumerate(ingredients, start=1):
             name = ingredient['ingredient__name']
-            amount = ingredient['amount']
+            total_amount = ingredient['total_amount']
             measurement_unit = ingredient['ingredient__measurement_unit']
-            shopping_list.append(f"{i}. {name}  - {amount}{measurement_unit}.")
+            shopping_list.append(
+                f"{i}. {name}  - {total_amount}{measurement_unit}.")
         return HttpResponse(
             '\n'.join(shopping_list), content_type='text/plain'
         )
