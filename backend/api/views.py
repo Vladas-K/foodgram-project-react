@@ -33,11 +33,17 @@ class UserViewSet(UserViewSet):
         permission_classes=[IsAuthenticated],
     )
     def get_subscriptions(self, request):
-        subscriptions = User.objects.filter(following__user=request.user)[:3]
-        serializer = FollowReadSerializer(subscriptions, many=True, context={
-            'request': request}
+        queryset = User.objects.filter(following__user=request.user)
+        pages = self.paginate_queryset(queryset)
+        serializer = FollowReadSerializer(
+            pages, many=True, context={'request': request}
         )
-        return Response(serializer.data)
+        data = serializer.data
+        for author in data:
+            recipes = Recipe.objects.filter(author=author['id'])[:3]
+            recipe_serializer = RecipeReadSerializer(recipes, many=True)
+            author['recipes'] = recipe_serializer.data
+        return self.get_paginated_response(data)
 
     @action(
         methods=['post', 'delete'], detail=True,
@@ -118,18 +124,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
     def add_delete_shopping_cart(self, request, pk):
         return self.add_or_delete_object(
             request, pk, ShoppingCartSerializer, ShoppingCart)
-
-    @action(
-        methods=('get',),
-        detail=False,
-        url_path='favorite',
-        permission_classes=[IsAuthenticated]
-    )
-    def get_favorite(self, request):
-        favorites = self.filter_queryset(
-            self.queryset).filter(in_favorite__user=request.user)
-        serializer = self.get_serializer(favorites, many=True)
-        return Response(serializer.data)
 
     @action(detail=False, url_path='download_shopping_cart')
     def download_shopping_cart(self, request):

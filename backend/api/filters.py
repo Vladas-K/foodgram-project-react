@@ -11,9 +11,17 @@ class RecipeFilter(FilterSet):
         queryset=Tag.objects.all(),
     )
 
+    is_favorited = filters.BooleanFilter(method='filter_is_favorited')
+
     class Meta:
         model = Recipe
-        fields = ('tags', 'author',)
+        fields = ('tags', 'author', 'is_favorited')
+
+    def filter_is_favorited(self, queryset, name, value):
+        user = self.request.user
+        if value and user.is_authenticated:
+            return queryset.filter(in_favorite__user=user)
+        return queryset
 
 
 class IngredientFilter(SearchFilter):

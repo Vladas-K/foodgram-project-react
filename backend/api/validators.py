@@ -17,7 +17,9 @@ def validate_recipe(serializer, data):
         unique_ingredient_ids = set(ingredient_ids)
         if len(ingredient_ids) != len(unique_ingredient_ids):
             raise ValidationError('Ингредиенты должны быть уникальны')
-    if Recipe.objects.filter(name=name, author=author).exists():
+    if not getattr(
+        serializer.instance, 'pk', None) and Recipe.objects.filter(
+            name=name, author=author).exists():
         raise ValidationError('Вы уже добавили этот рецепт')
     return data
 
