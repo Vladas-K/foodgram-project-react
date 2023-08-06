@@ -52,7 +52,7 @@ services:
       - static:/app/static/
       - media:/app/media/
   frontend:
-    image: vlad2505/foodgram_backend
+    image: vlad2505/foodgram_frontend
     env_file: .env
     volumes:
       - ../frontend/:/app/result_build/
