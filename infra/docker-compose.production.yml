@@ -12,13 +12,13 @@ services:
     volumes:
       - pg_data:/var/lib/postgresql/data
   backend:
-    build: ../backend/
+    image: vlad2505/foodgram_backend
     env_file: ../.env
     volumes:
       - static:/app/static/
       - media:/app/media/
   frontend:
-    build:
+    image: vlad2505/foodgram_backend
       context: ../frontend
       dockerfile: Dockerfile
     volumes:
