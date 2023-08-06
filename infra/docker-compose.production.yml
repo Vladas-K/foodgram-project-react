@@ -19,8 +19,6 @@ services:
       - media:/app/media/
   frontend:
     image: vlad2505/foodgram_backend
-      context: ../frontend
-      dockerfile: Dockerfile
     volumes:
       - ../frontend/:/app/result_build/
   nginx:
