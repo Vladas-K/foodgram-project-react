@@ -143,7 +143,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
     #     return HttpResponse(
     #         '\n'.join(shopping_list), content_type='text/plain'
     #     )
-    
+
     @action(detail=False, url_path='download_shopping_cart')
     def download_shopping_cart(self, request):
         ingredients = IngredientRecipe.objects.filter(
