@@ -125,25 +125,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
         return self.add_or_delete_object(
             request, pk, ShoppingCartSerializer, ShoppingCart)
 
-    # @action(detail=False, url_path='download_shopping_cart')
-    # def download_shopping_cart(self, request):
-    #     ingredients = {}
-    #     ingredients = IngredientRecipe.objects.filter(
-    #         recipe__shopping_list__user=request.user
-    #     ).values(
-    #         'ingredient__name', 'ingredient__measurement_unit'
-    #     ).annotate(total_amount=Sum('amount'))
-    #     shopping_list = []
-    #     for i, ingredient in enumerate(ingredients, start=1):
-    #         name = ingredient['ingredient__name']
-    #         total_amount = ingredient['total_amount']
-    #         measurement_unit = ingredient['ingredient__measurement_unit']
-    #         shopping_list.append(
-    #             f"{i}. {name}  - {total_amount}{measurement_unit}.")
-    #     return HttpResponse(
-    #         '\n'.join(shopping_list), content_type='text/plain'
-    #     )
-
     @action(detail=False, url_path='download_shopping_cart')
     def download_shopping_cart(self, request):
         ingredients = IngredientRecipe.objects.filter(
